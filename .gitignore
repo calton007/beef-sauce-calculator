@@ -1,0 +1,13 @@
+.DS_Store
+DerivedData/
+DerivedDataNoIcon/
+TypecheckModuleCache/
+*.xcuserstate
+xcuserdata/
+build/
+**/CompilationCache.noindex/
+**/ModuleCache.noindex/
+**/SDKStatCaches.noindex/
+*.xcodeproj/project.xcworkspace/
+BeefSauceCalculator/Assets.xcassets/AppIcon.appiconset/AppIcon-source-*.png
+BeefSauceCalculator/Assets.xcassets/AppIcon.appiconset/SiameseChef-transparent.png
