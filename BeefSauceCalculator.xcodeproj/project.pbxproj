@@ -12,6 +12,10 @@
 		2A1111112B00000100000014 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2A1111112B00000100000015 /* Assets.xcassets */; };
 		2A1111112B00000100000020 /* SauceCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111112B00000100000021 /* SauceCalculator.swift */; };
 		2A1111112B00000100000022 /* SauceCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111112B00000100000023 /* SauceCalculatorTests.swift */; };
+		2A1111112B00000100000040 /* NutritionLabelParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111112B00000100000041 /* NutritionLabelParser.swift */; };
+		2A1111112B00000100000042 /* NutritionOCRService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111112B00000100000043 /* NutritionOCRService.swift */; };
+		2A1111112B00000100000044 /* ImagePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111112B00000100000045 /* ImagePicker.swift */; };
+		2A1111112B00000100000046 /* NutritionLabelParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111112B00000100000047 /* NutritionLabelParserTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,6 +36,10 @@
 		2A1111112B00000100000021 /* SauceCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SauceCalculator.swift; sourceTree = "<group>"; };
 		2A1111112B00000100000023 /* SauceCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SauceCalculatorTests.swift; sourceTree = "<group>"; };
 		2A1111112B00000100000025 /* BeefSauceCalculatorTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BeefSauceCalculatorTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		2A1111112B00000100000041 /* NutritionLabelParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionLabelParser.swift; sourceTree = "<group>"; };
+		2A1111112B00000100000043 /* NutritionOCRService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionOCRService.swift; sourceTree = "<group>"; };
+		2A1111112B00000100000045 /* ImagePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePicker.swift; sourceTree = "<group>"; };
+		2A1111112B00000100000047 /* NutritionLabelParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionLabelParserTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -66,18 +74,13 @@
 			children = (
 				2A1111112B00000100000002 /* BeefSauceCalculatorApp.swift */,
 				2A1111112B00000100000004 /* ContentView.swift */,
+				2A1111112B00000100000045 /* ImagePicker.swift */,
+				2A1111112B00000100000041 /* NutritionLabelParser.swift */,
+				2A1111112B00000100000043 /* NutritionOCRService.swift */,
 				2A1111112B00000100000021 /* SauceCalculator.swift */,
 				2A1111112B00000100000015 /* Assets.xcassets */,
 			);
 			path = BeefSauceCalculator;
-			sourceTree = "<group>";
-		};
-		2A1111112B00000100000027 /* BeefSauceCalculatorTests */ = {
-			isa = PBXGroup;
-			children = (
-				2A1111112B00000100000023 /* SauceCalculatorTests.swift */,
-			);
-			path = BeefSauceCalculatorTests;
 			sourceTree = "<group>";
 		};
 		2A1111112B00000100000009 /* Products */ = {
@@ -87,6 +90,15 @@
 				2A1111112B00000100000025 /* BeefSauceCalculatorTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		2A1111112B00000100000027 /* BeefSauceCalculatorTests */ = {
+			isa = PBXGroup;
+			children = (
+				2A1111112B00000100000047 /* NutritionLabelParserTests.swift */,
+				2A1111112B00000100000023 /* SauceCalculatorTests.swift */,
+			);
+			path = BeefSauceCalculatorTests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -192,6 +204,9 @@
 			files = (
 				2A1111112B00000100000001 /* BeefSauceCalculatorApp.swift in Sources */,
 				2A1111112B00000100000003 /* ContentView.swift in Sources */,
+				2A1111112B00000100000044 /* ImagePicker.swift in Sources */,
+				2A1111112B00000100000040 /* NutritionLabelParser.swift in Sources */,
+				2A1111112B00000100000042 /* NutritionOCRService.swift in Sources */,
 				2A1111112B00000100000020 /* SauceCalculator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -200,6 +215,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2A1111112B00000100000046 /* NutritionLabelParserTests.swift in Sources */,
 				2A1111112B00000100000022 /* SauceCalculatorTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -344,13 +360,14 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "卤牛肉计算器";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.food-and-drink";
+				INFOPLIST_KEY_NSCameraUsageDescription = "用于拍摄酱料包装营养成分表并识别钠含量。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.calton007.BeefSauceCalculator;
+				PRODUCT_BUNDLE_IDENTIFIER = com.calton.BeefSauceCalculator;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -374,13 +391,14 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "卤牛肉计算器";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.food-and-drink";
+				INFOPLIST_KEY_NSCameraUsageDescription = "用于拍摄酱料包装营养成分表并识别钠含量。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.calton007.BeefSauceCalculator;
+				PRODUCT_BUNDLE_IDENTIFIER = com.calton.BeefSauceCalculator;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -396,6 +414,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 8QLE22YNWD;
@@ -407,7 +426,7 @@
 					"@loader_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.calton007.BeefSauceCalculatorTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.calton.BeefSauceCalculatorTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_VERSION = 6.0;
@@ -420,6 +439,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 8QLE22YNWD;
@@ -431,7 +451,7 @@
 					"@loader_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.calton007.BeefSauceCalculatorTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.calton.BeefSauceCalculatorTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_VERSION = 6.0;

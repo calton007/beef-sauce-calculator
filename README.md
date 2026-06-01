@@ -18,8 +18,8 @@
 3. Xcode 顶部设备选择你的 iPhone。
 4. 点左侧项目 `BeefSauceCalculator`，进入 target 的 `Signing & Capabilities`。
 5. 在 `Team` 里选择你的 Apple ID/Personal Team。
-6. 当前 Bundle Identifier 是 `com.calton007.BeefSauceCalculator`。如果仍然冲突，把它改成一个更独特的值，例如：
-   `com.calton007.BeefSauceCalculator.private`
+6. 当前 Bundle Identifier 是 `com.calton.BeefSauceCalculator`。如果仍然冲突，把它改成一个更独特的值，例如：
+   `com.calton.BeefSauceCalculator.private`
 7. 点击运行按钮。
 
 ## 私用安装说明
@@ -30,7 +30,7 @@
 
 1. 确认 Apple Developer Team 可用，并已在 Xcode 登录。
 2. 打开 `BeefSauceCalculator.xcodeproj`。
-3. 在 target 的 `Signing & Capabilities` 里确认 `Team` 和 Bundle Identifier `com.calton007.BeefSauceCalculator` 可用于 App Store Connect。
+3. 在 target 的 `Signing & Capabilities` 里确认 `Team` 和 Bundle Identifier `com.calton.BeefSauceCalculator` 可用于 App Store Connect。
 4. 运行测试：
    ```bash
    xcodebuild test -project BeefSauceCalculator.xcodeproj -scheme BeefSauceCalculator -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.5'
