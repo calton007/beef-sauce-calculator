@@ -37,7 +37,6 @@ private struct SavedSauceConfigs: Codable {
 }
 
 struct ContentView: View {
-    private let sodiumToNaCl = 2.542
     private let configKey = "beefSauceNaConfigV1"
     private let bg = Color(red: 0.97, green: 0.94, blue: 0.88)
     private let card = Color(red: 1.0, green: 0.985, blue: 0.95)
@@ -323,28 +322,29 @@ struct ContentView: View {
     }
 
     private var targetNaClGrams: Double {
-        let meat = parse(meatWeightText)
-        let percent = parse(saltPercentText)
-        guard meat > 0, percent > 0 else { return 0 }
-        return meat * percent / 100
+        SauceCalculator.targetNaClGrams(meatGrams: parse(meatWeightText), saltPercent: parse(saltPercentText))
     }
 
     private var currentNaClGrams: Double {
-        naclContribution(id: .sweet, grams: sweetGrams)
-        + naclContribution(id: .bean, grams: beanGrams)
-        + naclContribution(id: .soy, grams: soyGrams)
+        currentCalculation.currentNaClGrams
     }
 
     private var manualNaClGrams: Double {
-        naclContribution(id: .sweet, grams: sweetGrams)
-        + naclContribution(id: .bean, grams: beanGrams)
+        currentCalculation.manualNaClGrams
     }
 
     private var soyGrams: Double {
-        guard isValid(.soy), targetNaClGrams > 0 else { return 0 }
-        let remaining = targetNaClGrams - manualNaClGrams
-        guard remaining > 0 else { return 0 }
-        return remaining / naclRate(for: .soy)
+        currentCalculation.soyGrams
+    }
+
+    private var currentCalculation: SauceCalculation {
+        SauceCalculator.calculate(
+            meatGrams: parse(meatWeightText),
+            saltPercent: parse(saltPercentText),
+            sweet: sauceInput(for: .sweet, grams: sweetGrams),
+            bean: sauceInput(for: .bean, grams: beanGrams),
+            soy: sauceInput(for: .soy, grams: 0)
+        )
     }
 
     private var invalidSauces: [SauceID] {
@@ -377,12 +377,19 @@ struct ContentView: View {
 
     private func naclRate(for id: SauceID) -> Double {
         let config = configs[id, default: defaultConfig(for: id)]
-        guard config.sodiumMilligrams > 0, config.referenceGrams > 0 else { return 0 }
-        return config.sodiumMilligrams * sodiumToNaCl / 1000 / config.referenceGrams
+        return SauceCalculator.naclRate(
+            sodiumMilligrams: config.sodiumMilligrams,
+            referenceGrams: config.referenceGrams
+        )
     }
 
     private func naclContribution(id: SauceID, grams: Double) -> Double {
-        grams * naclRate(for: id)
+        let config = configs[id, default: defaultConfig(for: id)]
+        return SauceCalculator.naclContribution(
+            grams: grams,
+            sodiumMilligrams: config.sodiumMilligrams,
+            referenceGrams: config.referenceGrams
+        )
     }
 
     private func sliderMaximum(for id: SauceID) -> Double {
@@ -397,8 +404,22 @@ struct ContentView: View {
     }
 
     private func trimmedManualGrams(_ grams: Double, for id: SauceID) -> Double {
-        guard isValid(id) else { return 0 }
-        return min(max(0, grams), sliderMaximum(for: id))
+        let config = configs[id, default: defaultConfig(for: id)]
+        return SauceCalculator.trimmedManualGrams(
+            grams,
+            sodiumMilligrams: config.sodiumMilligrams,
+            referenceGrams: config.referenceGrams,
+            targetNaClGrams: targetNaClGrams
+        )
+    }
+
+    private func sauceInput(for id: SauceID, grams: Double) -> SauceInput {
+        let config = configs[id, default: defaultConfig(for: id)]
+        return SauceInput(
+            sodiumMilligrams: config.sodiumMilligrams,
+            referenceGrams: config.referenceGrams,
+            grams: grams
+        )
     }
 
     private func loadConfigs() {

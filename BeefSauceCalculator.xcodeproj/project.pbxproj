@@ -10,17 +10,39 @@
 		2A1111112B00000100000001 /* BeefSauceCalculatorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111112B00000100000002 /* BeefSauceCalculatorApp.swift */; };
 		2A1111112B00000100000003 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111112B00000100000004 /* ContentView.swift */; };
 		2A1111112B00000100000014 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2A1111112B00000100000015 /* Assets.xcassets */; };
+		2A1111112B00000100000020 /* SauceCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111112B00000100000021 /* SauceCalculator.swift */; };
+		2A1111112B00000100000022 /* SauceCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A1111112B00000100000023 /* SauceCalculatorTests.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		2A1111112B00000100000024 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2A1111112B0000010000000E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2A1111112B0000010000000A;
+			remoteInfo = BeefSauceCalculator;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		2A1111112B00000100000002 /* BeefSauceCalculatorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeefSauceCalculatorApp.swift; sourceTree = "<group>"; };
 		2A1111112B00000100000004 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		2A1111112B00000100000005 /* BeefSauceCalculator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BeefSauceCalculator.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2A1111112B00000100000015 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		2A1111112B00000100000021 /* SauceCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SauceCalculator.swift; sourceTree = "<group>"; };
+		2A1111112B00000100000023 /* SauceCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SauceCalculatorTests.swift; sourceTree = "<group>"; };
+		2A1111112B00000100000025 /* BeefSauceCalculatorTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BeefSauceCalculatorTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		2A1111112B00000100000006 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2A1111112B00000100000026 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -34,6 +56,7 @@
 			isa = PBXGroup;
 			children = (
 				2A1111112B00000100000008 /* BeefSauceCalculator */,
+				2A1111112B00000100000027 /* BeefSauceCalculatorTests */,
 				2A1111112B00000100000009 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -43,15 +66,25 @@
 			children = (
 				2A1111112B00000100000002 /* BeefSauceCalculatorApp.swift */,
 				2A1111112B00000100000004 /* ContentView.swift */,
+				2A1111112B00000100000021 /* SauceCalculator.swift */,
 				2A1111112B00000100000015 /* Assets.xcassets */,
 			);
 			path = BeefSauceCalculator;
+			sourceTree = "<group>";
+		};
+		2A1111112B00000100000027 /* BeefSauceCalculatorTests */ = {
+			isa = PBXGroup;
+			children = (
+				2A1111112B00000100000023 /* SauceCalculatorTests.swift */,
+			);
+			path = BeefSauceCalculatorTests;
 			sourceTree = "<group>";
 		};
 		2A1111112B00000100000009 /* Products */ = {
 			isa = PBXGroup;
 			children = (
 				2A1111112B00000100000005 /* BeefSauceCalculator.app */,
+				2A1111112B00000100000025 /* BeefSauceCalculatorTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -76,6 +109,24 @@
 			productReference = 2A1111112B00000100000005 /* BeefSauceCalculator.app */;
 			productType = "com.apple.product-type.application";
 		};
+		2A1111112B00000100000030 /* BeefSauceCalculatorTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2A1111112B00000100000031 /* Build configuration list for PBXNativeTarget "BeefSauceCalculatorTests" */;
+			buildPhases = (
+				2A1111112B00000100000032 /* Sources */,
+				2A1111112B00000100000026 /* Frameworks */,
+				2A1111112B00000100000033 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				2A1111112B00000100000034 /* PBXTargetDependency */,
+			);
+			name = BeefSauceCalculatorTests;
+			productName = BeefSauceCalculatorTests;
+			productReference = 2A1111112B00000100000025 /* BeefSauceCalculatorTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -88,6 +139,10 @@
 				TargetAttributes = {
 					2A1111112B0000010000000A = {
 						CreatedOnToolsVersion = 26.5;
+					};
+					2A1111112B00000100000030 = {
+						CreatedOnToolsVersion = 26.5;
+						TestTargetID = 2A1111112B0000010000000A;
 					};
 				};
 			};
@@ -107,6 +162,7 @@
 			projectRoot = "";
 			targets = (
 				2A1111112B0000010000000A /* BeefSauceCalculator */,
+				2A1111112B00000100000030 /* BeefSauceCalculatorTests */,
 			);
 		};
 /* End PBXProject section */
@@ -120,6 +176,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		2A1111112B00000100000033 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -129,10 +192,27 @@
 			files = (
 				2A1111112B00000100000001 /* BeefSauceCalculatorApp.swift in Sources */,
 				2A1111112B00000100000003 /* ContentView.swift in Sources */,
+				2A1111112B00000100000020 /* SauceCalculator.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2A1111112B00000100000032 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2A1111112B00000100000022 /* SauceCalculatorTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		2A1111112B00000100000034 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2A1111112B0000010000000A /* BeefSauceCalculator */;
+			targetProxy = 2A1111112B00000100000024 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		2A1111112B00000100000010 /* Debug */ = {
@@ -257,7 +337,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = 8QLE22YNWD;
 				ENABLE_PREVIEWS = YES;
@@ -270,7 +350,7 @@
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ertiao.BeefSauceCalculator;
+				PRODUCT_BUNDLE_IDENTIFIER = com.calton007.BeefSauceCalculator;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -287,7 +367,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = 8QLE22YNWD;
 				ENABLE_PREVIEWS = YES;
@@ -300,7 +380,7 @@
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ertiao.BeefSauceCalculator;
+				PRODUCT_BUNDLE_IDENTIFIER = com.calton007.BeefSauceCalculator;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -309,6 +389,54 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		2A1111112B00000100000035 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = 8QLE22YNWD;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.calton007.BeefSauceCalculatorTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BeefSauceCalculator.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/BeefSauceCalculator";
+			};
+			name = Debug;
+		};
+		2A1111112B00000100000036 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = 8QLE22YNWD;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.calton007.BeefSauceCalculatorTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BeefSauceCalculator.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/BeefSauceCalculator";
 			};
 			name = Release;
 		};
@@ -329,6 +457,15 @@
 			buildConfigurations = (
 				2A1111112B00000100000010 /* Debug */,
 				2A1111112B00000100000011 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2A1111112B00000100000031 /* Build configuration list for PBXNativeTarget "BeefSauceCalculatorTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2A1111112B00000100000035 /* Debug */,
+				2A1111112B00000100000036 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
