@@ -231,6 +231,7 @@ struct ContentView: View {
                     .keyboardType(.decimalPad)
                     .font(.system(size: 18, weight: .heavy))
                     .foregroundStyle(ink)
+                    .accessibilityLabel(title)
                 Text(unit)
                     .font(.system(size: 13, weight: .heavy))
                     .foregroundStyle(subInk)
@@ -258,6 +259,7 @@ struct ContentView: View {
                     .keyboardType(.decimalPad)
                     .font(.system(size: 16, weight: .heavy))
                     .foregroundStyle(ink)
+                    .accessibilityLabel("\(id.name) \(title)")
                 Text(unit)
                     .font(.system(size: 12, weight: .heavy))
                     .foregroundStyle(subInk)
@@ -390,8 +392,13 @@ struct ContentView: View {
     }
 
     private func trimManualSliders() {
-        sweetGrams = min(max(0, sweetGrams), sliderMaximum(for: .sweet))
-        beanGrams = min(max(0, beanGrams), sliderMaximum(for: .bean))
+        sweetGrams = trimmedManualGrams(sweetGrams, for: .sweet)
+        beanGrams = trimmedManualGrams(beanGrams, for: .bean)
+    }
+
+    private func trimmedManualGrams(_ grams: Double, for id: SauceID) -> Double {
+        guard isValid(id) else { return 0 }
+        return min(max(0, grams), sliderMaximum(for: id))
     }
 
     private func loadConfigs() {
