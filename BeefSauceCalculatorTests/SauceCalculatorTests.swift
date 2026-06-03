@@ -80,4 +80,17 @@ final class SauceCalculatorTests: XCTestCase {
             accuracy: 0.0001
         )
     }
+
+    func testNumberTextFormatsInputWithoutGroupingSeparator() {
+        XCTAssertEqual(NumberText.formatInput(3900), "3900")
+        XCTAssertEqual(NumberText.formatInput(3900.125), "3900.12")
+    }
+
+    func testNumberTextParsesThousandsAndDecimalCommas() throws {
+        XCTAssertEqual(try XCTUnwrap(NumberText.parse("3,900")), 3900, accuracy: 0.0001)
+        XCTAssertEqual(try XCTUnwrap(NumberText.parse("3,9")), 3.9, accuracy: 0.0001)
+        XCTAssertEqual(try XCTUnwrap(NumberText.parse("3900")), 3900, accuracy: 0.0001)
+        XCTAssertEqual(try XCTUnwrap(NumberText.parse("1,234.56")), 1234.56, accuracy: 0.0001)
+        XCTAssertEqual(try XCTUnwrap(NumberText.parse("3.900")), 3.9, accuracy: 0.0001)
+    }
 }

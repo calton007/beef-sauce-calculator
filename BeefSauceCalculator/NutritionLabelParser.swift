@@ -18,7 +18,12 @@ enum NutritionLabelParser {
         var candidates: [NutritionLabelCandidate] = []
 
         for (index, line) in lines.enumerated() {
-            guard containsSodiumKeyword(line), let sodium = sodiumValue(in: line) else {
+            guard containsSodiumKeyword(line) else {
+                continue
+            }
+
+            let sodium = sodiumValue(in: line) ?? sodiumValueNearLine(index, in: lines)
+            guard let sodium else {
                 continue
             }
 
@@ -33,6 +38,10 @@ enum NutritionLabelParser {
                     score: score
                 )
             )
+        }
+
+        if let fallback = singleMilligramNutritionFallback(in: lines, reference: globalReference) {
+            candidates.append(fallback)
         }
 
         return deduplicated(candidates)
@@ -74,17 +83,77 @@ enum NutritionLabelParser {
 
     private static func containsSodiumKeyword(_ text: String) -> Bool {
         let lower = text.lowercased()
-        return lower.contains("钠") || lower.contains("sodium") || lower.range(of: #"\bna\b"#, options: .regularExpression) != nil
+        return lower.contains("钠")
+            || lower.contains("纳")
+            || lower.contains("鈉")
+            || lower.contains("sodium")
+            || lower.range(of: #"\bna\b"#, options: .regularExpression) != nil
     }
 
     private static func sodiumValue(in text: String) -> Double? {
         let patterns = [
-            #"(?:钠|sodium|\bna\b)\D{0,24}(\d+(?:\.\d+)?)\s*(?:mg)?"#,
-            #"(\d+(?:\.\d+)?)\s*(?:mg)\D{0,24}(?:钠|sodium|\bna\b)"#
+            #"(?:钠|纳|鈉|sodium|\bna\b)\D{0,24}(\d+(?:\.\d+)?)\s*(?:mg)?"#,
+            #"(\d+(?:\.\d+)?)\s*(?:mg)\D{0,24}(?:钠|纳|鈉|sodium|\bna\b)"#
         ]
 
         for pattern in patterns {
             if let value = firstNumber(matching: pattern, in: text, options: [.caseInsensitive]) {
+                return value
+            }
+        }
+        return nil
+    }
+
+    private static func singleMilligramNutritionFallback(
+        in lines: [String],
+        reference: Double?
+    ) -> NutritionLabelCandidate? {
+        let fullText = lines.joined(separator: " ")
+        guard hasNutritionContext(fullText) else { return nil }
+
+        let values = milligramValues(in: fullText)
+        guard values.count == 1, let sodium = values.first else { return nil }
+
+        return NutritionLabelCandidate(
+            sodiumMilligrams: sodium,
+            referenceGrams: reference,
+            sourceText: "营养表唯一 mg 数值",
+            score: reference == nil ? 12 : 32
+        )
+    }
+
+    private static func hasNutritionContext(_ text: String) -> Bool {
+        let lower = text.lowercased()
+        return text.contains("营养")
+            || text.contains("每份")
+            || text.contains("每100")
+            || lower.contains("nutrition")
+            || lower.contains("nrv")
+    }
+
+    private static func milligramValues(in text: String) -> [Double] {
+        guard let regex = try? NSRegularExpression(
+            pattern: #"(\d+(?:\.\d+)?)\s*mg"#,
+            options: [.caseInsensitive]
+        ) else {
+            return []
+        }
+
+        let range = NSRange(text.startIndex..<text.endIndex, in: text)
+        return regex.matches(in: text, range: range).compactMap { match in
+            guard match.numberOfRanges > 1,
+                  let valueRange = Range(match.range(at: 1), in: text) else {
+                return nil
+            }
+            return Double(text[valueRange])
+        }
+    }
+
+    private static func sodiumValueNearLine(_ index: Int, in lines: [String]) -> Double? {
+        guard index + 1 < lines.count else { return nil }
+        let end = min(lines.count - 1, index + 3)
+        for lineIndex in (index + 1)...end {
+            if let value = firstNumber(matching: #"(\d+(?:\.\d+)?)\s*mg"#, in: lines[lineIndex], options: [.caseInsensitive]) {
                 return value
             }
         }

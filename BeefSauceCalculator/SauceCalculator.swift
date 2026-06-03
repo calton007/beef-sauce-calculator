@@ -88,3 +88,34 @@ enum SauceCalculator {
         return min(max(0, grams), maximum)
     }
 }
+
+enum NumberText {
+    static func parse(_ text: String) -> Double? {
+        let normalized = text
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: " ", with: "")
+
+        guard !normalized.isEmpty else { return nil }
+
+        if usesCommaAsThousandsSeparator(normalized) {
+            return Double(normalized.replacingOccurrences(of: ",", with: ""))
+        }
+
+        return Double(normalized.replacingOccurrences(of: ",", with: "."))
+    }
+
+    static func formatInput(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.numberStyle = .decimal
+        formatter.usesGroupingSeparator = false
+        formatter.minimumFractionDigits = 0
+        formatter.maximumFractionDigits = 2
+        return formatter.string(from: NSNumber(value: value)) ?? String(value)
+    }
+
+    private static func usesCommaAsThousandsSeparator(_ text: String) -> Bool {
+        let pattern = #"^[+-]?\d{1,3}(,\d{3})+(\.\d+)?$"#
+        return text.range(of: pattern, options: .regularExpression) != nil
+    }
+}

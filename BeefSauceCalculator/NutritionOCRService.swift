@@ -14,26 +14,62 @@ enum NutritionOCRService {
         }
 
         return try await Task.detached(priority: .userInitiated) {
-            let request = VNRecognizeTextRequest()
-            request.recognitionLevel = .accurate
-            request.usesLanguageCorrection = true
-            request.recognitionLanguages = ["zh-Hans", "en-US"]
+            let orientation = CGImagePropertyOrientation(image.imageOrientation)
+            var results = try recognize(cgImage: cgImage, orientation: orientation)
 
-            let handler = VNImageRequestHandler(
-                cgImage: cgImage,
-                orientation: CGImagePropertyOrientation(image.imageOrientation),
-                options: [:]
-            )
-            try handler.perform([request])
-
-            guard let observations = request.results else {
-                throw NutritionOCRError.recognitionFailed
+            if let enhancedImage = enhancedNutritionImage(from: cgImage) {
+                results.append(contentsOf: try recognize(cgImage: enhancedImage, orientation: orientation))
             }
 
-            return observations.compactMap { observation in
-                observation.topCandidates(1).first?.string
-            }
+            return deduplicated(results)
         }.value
+    }
+
+    private static func recognize(cgImage: CGImage, orientation: CGImagePropertyOrientation) throws -> [String] {
+        let request = VNRecognizeTextRequest()
+        request.recognitionLevel = .accurate
+        request.usesLanguageCorrection = true
+        request.recognitionLanguages = ["zh-Hans", "en-US"]
+        request.customWords = ["营养成分表", "每份", "每100克", "钠", "纳", "鈉", "毫克", "mg"]
+        request.minimumTextHeight = 0.002
+
+        let handler = VNImageRequestHandler(cgImage: cgImage, orientation: orientation, options: [:])
+        try handler.perform([request])
+
+        guard let observations = request.results else {
+            throw NutritionOCRError.recognitionFailed
+        }
+
+        return observations.flatMap { observation in
+            observation.topCandidates(5).map(\.string)
+        }
+    }
+
+    private static func enhancedNutritionImage(from cgImage: CGImage) -> CGImage? {
+        let input = CIImage(cgImage: cgImage)
+        let filters = input
+            .applyingFilter("CIColorControls", parameters: [
+                kCIInputSaturationKey: 0,
+                kCIInputBrightnessKey: 0.08,
+                kCIInputContrastKey: 1.85
+            ])
+            .applyingFilter("CISharpenLuminance", parameters: [
+                kCIInputSharpnessKey: 0.75
+            ])
+
+        return CIContext(options: nil).createCGImage(filters, from: filters.extent)
+    }
+
+    private static func deduplicated(_ lines: [String]) -> [String] {
+        var seen = Set<String>()
+        var result: [String] = []
+        for line in lines {
+            let normalized = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !normalized.isEmpty, !seen.contains(normalized) else { continue }
+            seen.insert(normalized)
+            result.append(normalized)
+        }
+        return result
     }
 }
 

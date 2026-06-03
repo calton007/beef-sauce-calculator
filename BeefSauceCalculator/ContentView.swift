@@ -12,7 +12,7 @@ private enum SauceID: String, CaseIterable, Identifiable {
     var name: String {
         switch self {
         case .sweet: "甜面酱"
-        case .bean: "豆瓣酱"
+        case .bean: "黄豆酱"
         case .soy: "酱油"
         }
     }
@@ -40,17 +40,28 @@ private struct SavedSauceConfigs: Codable {
 private struct OCRConfirmation: Identifiable {
     let id = UUID()
     var sauceID: SauceID
-    var recognizedText: String
+    var originalImage: UIImage
     var candidates: [NutritionLabelCandidate]
+}
+
+private enum AppTheme {
+    static let bg = Color(red: 0.97, green: 0.94, blue: 0.88)
+    static let card = Color(red: 1.0, green: 0.985, blue: 0.95)
+    static let field = Color.white
+    static let ink = Color(red: 0.12, green: 0.08, blue: 0.05)
+    static let subInk = Color(red: 0.36, green: 0.30, blue: 0.24)
+    static let brown = Color(red: 0.38, green: 0.25, blue: 0.14)
+    static let border = Color(red: 0.82, green: 0.74, blue: 0.63)
+    static let warmHighlight = Color(red: 1.0, green: 0.94, blue: 0.81)
 }
 
 struct ContentView: View {
     private let configKey = "beefSauceNaConfigV1"
-    private let bg = Color(red: 0.97, green: 0.94, blue: 0.88)
-    private let card = Color(red: 1.0, green: 0.985, blue: 0.95)
-    private let field = Color.white
-    private let ink = Color(red: 0.12, green: 0.08, blue: 0.05)
-    private let subInk = Color(red: 0.36, green: 0.30, blue: 0.24)
+    private let bg = AppTheme.bg
+    private let card = AppTheme.card
+    private let field = AppTheme.field
+    private let ink = AppTheme.ink
+    private let subInk = AppTheme.subInk
 
     @State private var meatWeightText = "1000"
     @State private var saltPercentText = "4"
@@ -74,16 +85,46 @@ struct ContentView: View {
     @State private var ocrReferenceText = ""
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 8) {
-                header
-                baseSection
-                sauceSection
-                statusView
+        ZStack(alignment: .bottom) {
+            ScrollView {
+                VStack(spacing: 8) {
+                    header
+                    baseSection
+                    sauceSection
+                    statusView
+                }
+                .padding(.horizontal, 12)
+                .padding(.top, 10)
+                .padding(.bottom, 12)
             }
-            .padding(.horizontal, 12)
-            .padding(.top, 10)
-            .padding(.bottom, 12)
+            .scrollDismissesKeyboard(.interactively)
+
+            if sourceDialogVisible {
+                Color.black.opacity(0.24)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        cancelOCRSourceOptions()
+                    }
+
+                OCRSourceDialog(
+                    sauceName: pendingScanSauce?.name ?? "酱料",
+                    cameraAvailable: UIImagePickerController.isSourceTypeAvailable(.camera),
+                    onCamera: {
+                        sourceDialogVisible = false
+                        dismissKeyboard()
+                        cameraPickerVisible = true
+                    },
+                    onPhoto: {
+                        sourceDialogVisible = false
+                        dismissKeyboard()
+                        photoPickerVisible = true
+                    },
+                    onCancel: cancelOCRSourceOptions
+                )
+                .padding(.horizontal, 12)
+                .padding(.bottom, 10)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
         .safeAreaInset(edge: .top) {
             Color.clear.frame(height: 6)
@@ -91,7 +132,6 @@ struct ContentView: View {
         .background(bg.ignoresSafeArea())
         .onAppear(perform: loadConfigs)
         .foregroundStyle(ink)
-        .scrollDismissesKeyboard(.interactively)
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()
@@ -101,23 +141,7 @@ struct ContentView: View {
                 .font(.system(size: 16, weight: .bold))
             }
         }
-        .confirmationDialog("识别钠含量", isPresented: $sourceDialogVisible, titleVisibility: .visible) {
-            if UIImagePickerController.isSourceTypeAvailable(.camera) {
-                Button("拍照") {
-                    dismissKeyboard()
-                    cameraPickerVisible = true
-                }
-            }
-            Button("从相册选择") {
-                dismissKeyboard()
-                photoPickerVisible = true
-            }
-            Button("取消", role: .cancel) {}
-        } message: {
-            if let sauce = pendingScanSauce {
-                Text("选择\(sauce.name)包装照片来源")
-            }
-        }
+        .animation(.easeOut(duration: 0.18), value: sourceDialogVisible)
         .sheet(isPresented: $cameraPickerVisible) {
             ImagePicker(sourceType: .camera) { image in
                 recognizeNutritionLabel(from: image)
@@ -134,15 +158,18 @@ struct ContentView: View {
         }
         .sheet(item: $ocrConfirmation) { confirmation in
             OCRConfirmationSheet(
+                sauceID: confirmation.sauceID,
                 sauceName: confirmation.sauceID.name,
+                accentColor: confirmation.sauceID.color,
                 candidates: confirmation.candidates,
-                recognizedText: confirmation.recognizedText,
+                originalImage: confirmation.originalImage,
                 selectedIndex: $ocrCandidateIndex,
                 sodiumText: $ocrSodiumText,
                 referenceText: $ocrReferenceText,
                 onCandidateSelected: applyOCRCandidate,
                 onCancel: {
                     ocrConfirmation = nil
+                    pendingScanSauce = nil
                 },
                 onConfirm: {
                     applyOCRConfirmation(for: confirmation.sauceID)
@@ -157,13 +184,6 @@ struct ContentView: View {
                 .font(.system(size: 25, weight: .heavy))
                 .foregroundStyle(ink)
             Spacer()
-            Text("Na × 2.542")
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(subInk)
-                .padding(.horizontal, 9)
-                .padding(.vertical, 5)
-                .background(Color.white.opacity(0.65))
-                .clipShape(Capsule())
         }
     }
 
@@ -174,9 +194,6 @@ struct ContentView: View {
                     Text("基础用量")
                         .font(.system(size: 17, weight: .heavy))
                     Spacer()
-                    Text("NaCl = 肉重 × %")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(subInk)
                 }
 
                 HStack(spacing: 8) {
@@ -266,7 +283,7 @@ struct ContentView: View {
                 }
                 .accessibilityLabel("扫描\(id.name)钠含量")
 
-                Text(format(grams.wrappedValue, digits: 1) + "g")
+                Text(format(grams.wrappedValue, digits: 1) + usageUnit(for: id))
                     .font(.system(size: 21, weight: .heavy))
                     .foregroundStyle(id.color)
             }
@@ -277,7 +294,7 @@ struct ContentView: View {
                     .font(.system(size: 20, weight: .bold))
                     .foregroundStyle(subInk)
                     .padding(.top, 14)
-                configField(id: id, title: "重量", keyPath: \.referenceGrams, unit: "g")
+                configField(id: id, title: referenceTitle(for: id), keyPath: \.referenceGrams, unit: usageUnit(for: id))
             }
 
             HStack(spacing: 8) {
@@ -296,6 +313,14 @@ struct ContentView: View {
             }
         }
         .padding(.vertical, 8)
+    }
+
+    private func usageUnit(for id: SauceID) -> String {
+        id == .soy ? "mL" : "g"
+    }
+
+    private func referenceTitle(for id: SauceID) -> String {
+        id == .soy ? "容量" : "重量"
     }
 
     private func numberField(title: String, text: Binding<String>, unit: String) -> some View {
@@ -391,7 +416,7 @@ struct ContentView: View {
             return ("至少填写一种有效酱料钠含量。", true)
         }
         if manualNaClGrams > targetNaClGrams + 0.005 {
-            return ("甜面酱和豆瓣酱已超出目标，请减少。", true)
+            return ("甜面酱和黄豆酱已超出目标，请减少。", true)
         }
         if !isValid(.soy) && manualNaClGrams < targetNaClGrams - 0.005 {
             return ("酱油钠含量无效，无法自动补足。", true)
@@ -538,6 +563,11 @@ struct ContentView: View {
         sourceDialogVisible = true
     }
 
+    private func cancelOCRSourceOptions() {
+        sourceDialogVisible = false
+        pendingScanSauce = nil
+    }
+
     private func loadPhotoPickerItem(_ item: PhotosPickerItem?) {
         guard let item else { return }
         selectedPhotoItem = nil
@@ -563,7 +593,7 @@ struct ContentView: View {
             do {
                 let lines = try await NutritionOCRService.recognizeText(from: image)
                 await MainActor.run {
-                    handleRecognizedText(lines)
+                    handleRecognizedText(lines, from: image)
                 }
             } catch {
                 await MainActor.run {
@@ -573,7 +603,7 @@ struct ContentView: View {
         }
     }
 
-    private func handleRecognizedText(_ lines: [String]) {
+    private func handleRecognizedText(_ lines: [String], from image: UIImage) {
         let text = lines.joined(separator: "\n")
         let candidates = NutritionLabelParser.candidates(from: text)
         guard let sauce = pendingScanSauce, !candidates.isEmpty else {
@@ -585,7 +615,7 @@ struct ContentView: View {
         applyOCRCandidate(candidates[0])
         ocrConfirmation = OCRConfirmation(
             sauceID: sauce,
-            recognizedText: text,
+            originalImage: image,
             candidates: candidates
         )
         scanMessage = nil
@@ -600,7 +630,7 @@ struct ContentView: View {
         let sodium = parse(ocrSodiumText)
         let reference = parse(ocrReferenceText)
         guard sodium > 0, reference > 0 else {
-            scanMessage = ("请补全 Na mg 和对应重量 g。", true)
+            scanMessage = ("请补全 Na mg 和对应\(referenceTitle(for: id)) \(usageUnit(for: id))。", true)
             return
         }
 
@@ -612,7 +642,7 @@ struct ContentView: View {
     }
 
     private func parse(_ text: String) -> Double {
-        Double(text.replacingOccurrences(of: ",", with: ".")) ?? 0
+        NumberText.parse(text) ?? 0
     }
 
     private func format(_ value: Double, digits: Int) -> String {
@@ -620,7 +650,7 @@ struct ContentView: View {
     }
 
     private func formatInput(_ value: Double) -> String {
-        value.formatted(.number.precision(.fractionLength(0...2)))
+        NumberText.formatInput(value)
     }
 
     private func dismissKeyboard() {
@@ -628,10 +658,79 @@ struct ContentView: View {
     }
 }
 
-private struct OCRConfirmationSheet: View {
+private struct OCRSourceDialog: View {
     var sauceName: String
+    var cameraAvailable: Bool
+    var onCamera: () -> Void
+    var onPhoto: () -> Void
+    var onCancel: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("识别钠含量")
+                        .font(.system(size: 19, weight: .heavy))
+                        .foregroundStyle(AppTheme.ink)
+                    Text("选择\(sauceName)包装照片来源")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(AppTheme.subInk)
+                }
+                Spacer()
+                Button(action: onCancel) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 13, weight: .heavy))
+                        .foregroundStyle(AppTheme.subInk)
+                        .frame(width: 34, height: 34)
+                        .background(AppTheme.warmHighlight)
+                        .clipShape(Circle())
+                }
+                .accessibilityLabel("取消")
+            }
+
+            if cameraAvailable {
+                sourceButton(title: "拍照", systemImage: "camera.fill", action: onCamera)
+            }
+            sourceButton(title: "从相册选择", systemImage: "photo.on.rectangle.angled", action: onPhoto)
+        }
+        .padding(14)
+        .background(AppTheme.card)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(AppTheme.border, lineWidth: 1.2)
+        )
+        .shadow(color: Color.black.opacity(0.18), radius: 18, y: 8)
+    }
+
+    private func sourceButton(title: String, systemImage: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 16, weight: .heavy))
+                    .frame(width: 28)
+                Text(title)
+                    .font(.system(size: 16, weight: .heavy))
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .heavy))
+            }
+            .foregroundStyle(.white)
+            .padding(.horizontal, 13)
+            .frame(height: 48)
+            .background(AppTheme.brown)
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct OCRConfirmationSheet: View {
+    var sauceID: SauceID
+    var sauceName: String
+    var accentColor: Color
     var candidates: [NutritionLabelCandidate]
-    var recognizedText: String
+    var originalImage: UIImage
     @Binding var selectedIndex: Int
     @Binding var sodiumText: String
     @Binding var referenceText: String
@@ -639,84 +738,154 @@ private struct OCRConfirmationSheet: View {
     var onCancel: () -> Void
     var onConfirm: () -> Void
 
+    @State private var imageViewerVisible = false
+
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("选择识别结果")
-                            .font(.system(size: 18, weight: .heavy))
-                        ForEach(Array(candidates.enumerated()), id: \.element.id) { index, candidate in
-                            Button {
-                                selectedIndex = index
-                                onCandidateSelected(candidate)
-                            } label: {
-                                HStack {
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text("\(candidate.sodiumMilligrams.formatted(.number.precision(.fractionLength(0...2)))) mg / \(candidate.referenceGrams.map { $0.formatted(.number.precision(.fractionLength(0...2))) + " g" } ?? "需补重量")")
-                                            .font(.system(size: 16, weight: .heavy))
-                                        Text(candidate.sourceText)
-                                            .font(.system(size: 12, weight: .semibold))
-                                            .foregroundStyle(.secondary)
-                                            .lineLimit(2)
-                                    }
-                                    Spacer()
-                                    Image(systemName: selectedIndex == index ? "checkmark.circle.fill" : "circle")
-                                        .font(.system(size: 20, weight: .bold))
+            GeometryReader { proxy in
+                let topMaxHeight = min(320, proxy.size.height * 0.40)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 10) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                sectionTitle("选择识别结果")
+                                ForEach(Array(candidates.enumerated()), id: \.element.id) { index, candidate in
+                                    candidateButton(index: index, candidate: candidate)
                                 }
-                                .foregroundStyle(.primary)
-                                .padding(10)
-                                .background(selectedIndex == index ? Color.green.opacity(0.12) : Color.gray.opacity(0.10))
-                                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                             }
-                            .buttonStyle(.plain)
-                        }
-                    }
 
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("确认后填入\(sauceName)")
-                            .font(.system(size: 17, weight: .heavy))
-                        HStack(spacing: 8) {
-                            editableField(title: "Na", text: $sodiumText, unit: "mg")
-                            Text("/")
-                                .font(.system(size: 20, weight: .heavy))
-                                .padding(.top, 18)
-                            editableField(title: "重量", text: $referenceText, unit: "g")
+                            VStack(alignment: .leading, spacing: 8) {
+                                sectionTitle("确认后填入\(sauceName)")
+                                HStack(spacing: 8) {
+                                    editableField(title: "Na", text: $sodiumText, unit: "mg")
+                                    Text("/")
+                                        .font(.system(size: 20, weight: .heavy))
+                                        .foregroundStyle(AppTheme.subInk)
+                                        .padding(.top, 18)
+                                    editableField(title: referenceTitle, text: $referenceText, unit: referenceUnit)
+                                }
+                            }
                         }
+                        .padding(.horizontal, 16)
+                        .padding(.top, 12)
                     }
+                    .frame(maxHeight: topMaxHeight)
 
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("OCR 原文")
-                            .font(.system(size: 14, weight: .heavy))
-                        Text(recognizedText.isEmpty ? "无识别文本" : recognizedText)
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(.secondary)
-                            .textSelection(.enabled)
+                    VStack(alignment: .leading, spacing: 4) {
+                        sectionTitle("原图")
+                        Button {
+                            imageViewerVisible = true
+                        } label: {
+                            GeometryReader { imageProxy in
+                                Image(uiImage: originalImage)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: imageProxy.size.width, height: imageProxy.size.height)
+                                    .clipped()
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .background(AppTheme.field)
+                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .stroke(accentColor.opacity(0.75), lineWidth: 1.3)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("查看原图大图")
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 14)
                 }
-                .padding(16)
+                .background(AppTheme.bg)
             }
             .navigationTitle("确认钠含量")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("取消", action: onCancel)
+                        .foregroundStyle(AppTheme.brown)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("填入", action: onConfirm)
                         .fontWeight(.bold)
+                        .foregroundStyle(canConfirm ? accentColor : AppTheme.subInk.opacity(0.55))
                         .disabled(!canConfirm)
                 }
             }
+            .toolbarBackground(AppTheme.card, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
         }
+        .fullScreenCover(isPresented: $imageViewerVisible) {
+            OriginalImageViewer(image: originalImage)
+        }
+    }
+
+    private func sectionTitle(_ title: String) -> some View {
+        HStack(spacing: 7) {
+            RoundedRectangle(cornerRadius: 2, style: .continuous)
+                .fill(accentColor)
+                .frame(width: 4, height: 18)
+            Text(title)
+                .font(.system(size: 18, weight: .heavy))
+                .foregroundStyle(AppTheme.ink)
+        }
+    }
+
+    private func candidateButton(index: Int, candidate: NutritionLabelCandidate) -> some View {
+        Button {
+            selectedIndex = index
+            onCandidateSelected(candidate)
+        } label: {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("\(candidate.sodiumMilligrams.formatted(.number.precision(.fractionLength(0...2)))) mg / \(candidateReferenceText(candidate))")
+                        .font(.system(size: 16, weight: .heavy))
+                    Text(candidate.sourceText)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(AppTheme.subInk)
+                        .lineLimit(2)
+                }
+                Spacer()
+                Image(systemName: selectedIndex == index ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundStyle(selectedIndex == index ? accentColor : AppTheme.border)
+            }
+            .foregroundStyle(AppTheme.ink)
+            .padding(10)
+            .background(selectedIndex == index ? accentColor.opacity(0.14) : AppTheme.card)
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .stroke(selectedIndex == index ? accentColor : AppTheme.border, lineWidth: 1.1)
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     private var canConfirm: Bool {
         parsedPositiveDouble(sodiumText) != nil && parsedPositiveDouble(referenceText) != nil
     }
 
+    private var referenceTitle: String {
+        sauceID == .soy ? "容量" : "重量"
+    }
+
+    private var referenceUnit: String {
+        sauceID == .soy ? "mL" : "g"
+    }
+
+    private func candidateReferenceText(_ candidate: NutritionLabelCandidate) -> String {
+        if let reference = candidate.referenceGrams {
+            return reference.formatted(.number.precision(.fractionLength(0...2))) + " " + referenceUnit
+        }
+        return "需补\(referenceTitle)"
+    }
+
     private func parsedPositiveDouble(_ text: String) -> Double? {
-        let value = Double(text.replacingOccurrences(of: ",", with: "."))
+        let value = NumberText.parse(text)
         guard let value, value > 0 else { return nil }
         return value
     }
@@ -725,19 +894,99 @@ private struct OCRConfirmationSheet: View {
         VStack(alignment: .leading, spacing: 5) {
             Text(title)
                 .font(.system(size: 12, weight: .bold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppTheme.subInk)
             HStack(spacing: 4) {
                 TextField("", text: text)
                     .keyboardType(.decimalPad)
                     .font(.system(size: 18, weight: .heavy))
+                    .foregroundStyle(AppTheme.ink)
                 Text(unit)
                     .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(AppTheme.subInk)
             }
             .padding(.horizontal, 10)
             .frame(height: 44)
-            .background(Color(.secondarySystemBackground))
+            .background(AppTheme.field)
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .stroke(accentColor.opacity(0.55), lineWidth: 1.1)
+            )
+        }
+    }
+}
+
+private struct OriginalImageViewer: View {
+    var image: UIImage
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var scale = 1.0
+    @State private var lastScale = 1.0
+    @State private var offset = CGSize.zero
+    @State private var lastOffset = CGSize.zero
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.black.ignoresSafeArea()
+
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFit()
+                    .scaleEffect(scale)
+                    .offset(offset)
+                    .gesture(
+                        MagnificationGesture()
+                            .onChanged { value in
+                                scale = min(max(lastScale * value, 1), 5)
+                            }
+                            .onEnded { _ in
+                                lastScale = scale
+                                if scale == 1 {
+                                    offset = .zero
+                                    lastOffset = .zero
+                                }
+                            }
+                    )
+                    .simultaneousGesture(
+                        DragGesture()
+                            .onChanged { value in
+                                guard scale > 1 else { return }
+                                offset = CGSize(
+                                    width: lastOffset.width + value.translation.width,
+                                    height: lastOffset.height + value.translation.height
+                                )
+                            }
+                            .onEnded { _ in
+                                lastOffset = offset
+                            }
+                    )
+                    .onTapGesture(count: 2) {
+                        if scale > 1 {
+                            scale = 1
+                            lastScale = 1
+                            offset = .zero
+                            lastOffset = .zero
+                        } else {
+                            scale = 2.5
+                            lastScale = 2.5
+                        }
+                    }
+                    .padding()
+            }
+            .navigationTitle("原图")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("关闭") {
+                        dismiss()
+                    }
+                    .foregroundStyle(.white)
+                }
+            }
+            .toolbarBackground(.black, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
         }
     }
 }
