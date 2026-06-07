@@ -24,10 +24,16 @@ struct SauceCalculation: Equatable {
 
 enum SauceCalculator {
     static let sodiumToNaCl = 2.542
+    static let highSodiumMilligrams = 5000.0
+    static let highReferenceAmount = 100.0
 
     static func targetNaClGrams(meatGrams: Double, saltPercent: Double) -> Double {
         guard meatGrams > 0, saltPercent > 0 else { return 0 }
         return meatGrams * saltPercent / 100
+    }
+
+    static func shouldReviewNutritionData(sodiumMilligrams: Double, referenceGrams: Double) -> Bool {
+        sodiumMilligrams > highSodiumMilligrams || referenceGrams > highReferenceAmount
     }
 
     static func naclRate(sodiumMilligrams: Double, referenceGrams: Double) -> Double {
@@ -75,18 +81,6 @@ enum SauceCalculator {
         )
     }
 
-    static func trimmedManualGrams(
-        _ grams: Double,
-        sodiumMilligrams: Double,
-        referenceGrams: Double,
-        targetNaClGrams: Double
-    ) -> Double {
-        let rate = naclRate(sodiumMilligrams: sodiumMilligrams, referenceGrams: referenceGrams)
-        guard rate > 0 else { return 0 }
-        guard targetNaClGrams > 0 else { return min(max(0, grams), 100) }
-        let maximum = max(20, targetNaClGrams / rate * 1.25)
-        return min(max(0, grams), maximum)
-    }
 }
 
 enum NumberText {

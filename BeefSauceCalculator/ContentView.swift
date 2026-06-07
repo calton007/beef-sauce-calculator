@@ -53,6 +53,61 @@ private enum AppTheme {
     static let brown = Color(red: 0.38, green: 0.25, blue: 0.14)
     static let border = Color(red: 0.82, green: 0.74, blue: 0.63)
     static let warmHighlight = Color(red: 1.0, green: 0.94, blue: 0.81)
+
+    enum Radius {
+        static let card: CGFloat = 16
+        static let control: CGFloat = 14
+    }
+}
+
+private struct MainLayoutMetrics {
+    var outerSpacing: CGFloat
+    var horizontalPadding: CGFloat
+    var verticalPadding: CGFloat
+    var sectionTitleFontSize: CGFloat
+    var baseSpacing: CGFloat
+    var rowSpacing: CGFloat
+    var sauceRowVerticalPadding: CGFloat
+    var sauceNameFontSize: CGFloat
+    var sauceAmountFontSize: CGFloat
+    var saveButtonHeight: CGFloat
+    var saveButtonFontSize: CGFloat
+    var scanButtonSize: CGSize
+    var inputFieldHeight: CGFloat
+    var numberFieldHeight: CGFloat
+    var configFieldHeight: CGFloat
+    var amountFieldHeight: CGFloat
+    var cardPadding: CGFloat
+    var cardShadowRadius: CGFloat
+    var cardShadowY: CGFloat
+    var statusFontSize: CGFloat
+    var statusVerticalPadding: CGFloat
+    var warningFontSize: CGFloat
+
+    static let regular = MainLayoutMetrics(
+        outerSpacing: 12,
+        horizontalPadding: 14,
+        verticalPadding: 14,
+        sectionTitleFontSize: 17,
+        baseSpacing: 10,
+        rowSpacing: 7,
+        sauceRowVerticalPadding: 9,
+        sauceNameFontSize: 16,
+        sauceAmountFontSize: 21,
+        saveButtonHeight: 36,
+        saveButtonFontSize: 13,
+        scanButtonSize: CGSize(width: 34, height: 32),
+        inputFieldHeight: 42,
+        numberFieldHeight: 42,
+        configFieldHeight: 42,
+        amountFieldHeight: 42,
+        cardPadding: 12,
+        cardShadowRadius: 8,
+        cardShadowY: 3,
+        statusFontSize: 13,
+        statusVerticalPadding: 8,
+        warningFontSize: 12
+    )
 }
 
 struct ContentView: View {
@@ -70,8 +125,8 @@ struct ContentView: View {
         .bean: SauceConfig(sodiumMilligrams: 1100, referenceGrams: 15),
         .soy: SauceConfig(sodiumMilligrams: 900, referenceGrams: 15)
     ]
-    @State private var sweetGrams = 0.0
-    @State private var beanGrams = 0.0
+    @State private var sweetGramsText = "0"
+    @State private var beanGramsText = "0"
     @State private var savedMessageVisible = false
     @State private var scanMessage: (text: String, warning: Bool)?
     @State private var pendingScanSauce: SauceID?
@@ -87,15 +142,7 @@ struct ContentView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             ScrollView {
-                VStack(spacing: 8) {
-                    header
-                    baseSection
-                    sauceSection
-                    statusView
-                }
-                .padding(.horizontal, 12)
-                .padding(.top, 10)
-                .padding(.bottom, 12)
+                mainContent(metrics: .regular)
             }
             .scrollDismissesKeyboard(.interactively)
 
@@ -178,89 +225,115 @@ struct ContentView: View {
         }
     }
 
-    private var header: some View {
+    private func mainContent(metrics: MainLayoutMetrics) -> some View {
+        VStack(spacing: metrics.outerSpacing) {
+            baseSection(metrics: metrics)
+            sauceSection(metrics: metrics)
+            statusView(metrics: metrics)
+        }
+        .padding(.horizontal, metrics.horizontalPadding)
+        .padding(.vertical, metrics.verticalPadding)
+        .frame(maxWidth: .infinity, alignment: .top)
+    }
+
+    private func baseSection(metrics: MainLayoutMetrics) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            sectionHeader(title: "基础用量", metrics: metrics)
+            compactCard(metrics: metrics) {
+                HStack(spacing: 8) {
+                    numberField(title: "肉重", text: $meatWeightText, unit: "g", metrics: metrics)
+                    numberField(title: "盐度", text: $saltPercentText, unit: "%", metrics: metrics)
+                }
+            }
+        }
+    }
+
+    private func sauceSection(metrics: MainLayoutMetrics) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            sectionHeader(title: "酱料调配", metrics: metrics) {
+                saveConfigButton(metrics: metrics)
+            }
+            compactCard(metrics: metrics) {
+                VStack(spacing: 0) {
+                    sauceRow(id: .sweet, gramsText: $sweetGramsText, automatic: false, metrics: metrics)
+                    Divider().overlay(Color(red: 0.74, green: 0.67, blue: 0.57))
+                    sauceRow(id: .bean, gramsText: $beanGramsText, automatic: false, metrics: metrics)
+                    Divider().overlay(Color(red: 0.74, green: 0.67, blue: 0.57))
+                    sauceRow(id: .soy, gramsText: nil, automatic: true, metrics: metrics)
+                }
+            }
+        }
+    }
+
+    private func sectionHeader(title: String, metrics: MainLayoutMetrics) -> some View {
+        sectionHeader(title: title, metrics: metrics) {
+            EmptyView()
+        }
+    }
+
+    private func sectionHeader<Content: View>(
+        title: String,
+        metrics: MainLayoutMetrics,
+        @ViewBuilder trailing: () -> Content
+    ) -> some View {
         HStack {
-            Text("卤牛肉计算器")
-                .font(.system(size: 25, weight: .heavy))
-                .foregroundStyle(ink)
+            Text(title)
+                .font(.system(size: metrics.sectionTitleFontSize, weight: .heavy))
             Spacer()
+            trailing()
         }
+        .frame(maxWidth: .infinity)
     }
 
-    private var baseSection: some View {
-        compactCard {
-            VStack(spacing: 8) {
-                HStack {
-                    Text("基础用量")
-                        .font(.system(size: 17, weight: .heavy))
-                    Spacer()
-                }
-
-                HStack(spacing: 8) {
-                    numberField(title: "肉重", text: $meatWeightText, unit: "g")
-                    numberField(title: "盐度", text: $saltPercentText, unit: "%")
-                }
-
-                HStack(spacing: 8) {
-                    metricCard(title: "目标 NaCl", value: format(targetNaClGrams, digits: 2) + "g")
-                    metricCard(title: "当前 NaCl", value: format(currentNaClGrams, digits: 2) + "g")
-                }
-            }
+    private func saveConfigButton(metrics: MainLayoutMetrics) -> some View {
+        Button(action: saveConfigs) {
+            Label("保存配置", systemImage: "square.and.arrow.down")
+                .font(.system(size: metrics.saveButtonFontSize, weight: .heavy))
+                .foregroundStyle(AppTheme.brown)
+                .padding(.horizontal, 10)
+                .frame(height: metrics.saveButtonHeight)
         }
+        .background(AppTheme.field)
+        .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
+                .stroke(AppTheme.border, lineWidth: 1.1)
+                .allowsHitTesting(false)
+        )
+        .accessibilityLabel("保存配置")
     }
 
-    private var sauceSection: some View {
-        compactCard {
-            VStack(spacing: 0) {
-                HStack {
-                    Text("酱料调配")
-                        .font(.system(size: 17, weight: .heavy))
-                    Spacer()
-                    Button(action: saveConfigs) {
-                        Text("保存配置")
-                            .font(.system(size: 14, weight: .heavy))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 13)
-                            .padding(.vertical, 8)
-                    }
-                    .background(Color(red: 0.38, green: 0.25, blue: 0.14))
-                    .clipShape(Capsule())
-                }
-                .padding(.bottom, 6)
-
-                sauceRow(id: .sweet, grams: $sweetGrams, automatic: false)
-                Divider().overlay(Color(red: 0.74, green: 0.67, blue: 0.57))
-                sauceRow(id: .bean, grams: $beanGrams, automatic: false)
-                Divider().overlay(Color(red: 0.74, green: 0.67, blue: 0.57))
-                sauceRow(id: .soy, grams: .constant(soyGrams), automatic: true)
-            }
-        }
-    }
-
-    private var statusView: some View {
+    private func statusView(metrics: MainLayoutMetrics) -> some View {
         let state = status
         return Text(state.message)
-            .font(.system(size: 13, weight: .bold))
+            .font(.system(size: metrics.statusFontSize, weight: .bold))
             .foregroundStyle(state.warning ? Color(red: 0.62, green: 0.10, blue: 0.08) : Color(red: 0.12, green: 0.34, blue: 0.19))
             .frame(maxWidth: .infinity, alignment: .leading)
+            .lineLimit(1)
+            .truncationMode(.tail)
+            .minimumScaleFactor(0.85)
             .padding(.horizontal, 10)
-            .padding(.vertical, 8)
+            .padding(.vertical, metrics.statusVerticalPadding)
             .background(state.warning ? Color(red: 1.0, green: 0.90, blue: 0.87) : Color(red: 0.89, green: 0.95, blue: 0.87))
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
                     .stroke(state.warning ? Color(red: 0.88, green: 0.58, blue: 0.52) : Color(red: 0.67, green: 0.80, blue: 0.63))
+                    .allowsHitTesting(false)
             )
     }
 
-    private func sauceRow(id: SauceID, grams: Binding<Double>, automatic: Bool) -> some View {
-        VStack(spacing: 6) {
+    @ViewBuilder
+    private func sauceRow(id: SauceID, gramsText: Binding<String>?, automatic: Bool, metrics: MainLayoutMetrics) -> some View {
+        let gramsValue = automatic ? soyGrams : parseAmount(gramsText?.wrappedValue ?? "")
+
+        VStack(spacing: metrics.rowSpacing) {
             HStack(spacing: 7) {
                 Circle()
                     .fill(id.color)
                     .frame(width: 10, height: 10)
                 Text(id.name)
-                    .font(.system(size: 16, weight: .heavy))
+                    .font(.system(size: metrics.sauceNameFontSize, weight: .heavy))
                 if automatic {
                     Text("自动")
                         .font(.system(size: 11, weight: .heavy))
@@ -275,44 +348,56 @@ struct ContentView: View {
                     presentOCRSourceOptions(for: id)
                 } label: {
                     Image(systemName: "camera.viewfinder")
-                        .font(.system(size: 15, weight: .heavy))
-                        .foregroundStyle(id.color)
-                        .frame(width: 32, height: 32)
-                        .background(id.color.opacity(0.13))
-                        .clipShape(Circle())
+                        .font(.system(size: 14, weight: .heavy))
+                        .foregroundStyle(AppTheme.brown)
+                        .frame(width: metrics.scanButtonSize.width, height: metrics.scanButtonSize.height)
+                        .background(AppTheme.field)
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
+                                .stroke(AppTheme.border, lineWidth: 1.0)
+                                .allowsHitTesting(false)
+                        )
                 }
                 .accessibilityLabel("扫描\(id.name)钠含量")
 
-                Text(format(grams.wrappedValue, digits: 1) + usageUnit(for: id))
-                    .font(.system(size: 21, weight: .heavy))
+                Text(format(gramsValue, digits: 1) + usageUnit(for: id))
+                    .font(.system(size: metrics.sauceAmountFontSize, weight: .heavy))
                     .foregroundStyle(id.color)
             }
 
             HStack(spacing: 6) {
-                configField(id: id, title: "Na", keyPath: \.sodiumMilligrams, unit: "mg")
+                configField(id: id, title: "Na", keyPath: \.sodiumMilligrams, unit: "mg", metrics: metrics)
                 Text("/")
                     .font(.system(size: 20, weight: .bold))
                     .foregroundStyle(subInk)
                     .padding(.top, 14)
-                configField(id: id, title: referenceTitle(for: id), keyPath: \.referenceGrams, unit: usageUnit(for: id))
+                configField(id: id, title: referenceTitle(for: id), keyPath: \.referenceGrams, unit: usageUnit(for: id), metrics: metrics)
             }
 
-            HStack(spacing: 8) {
-                Slider(
-                    value: grams,
-                    in: 0...max(20, sliderMaximum(for: id)),
-                    step: 0.1
-                )
-                .tint(id.color)
-                .disabled(automatic || !isValid(id) || targetNaClGrams <= 0)
+            if shouldReviewNutritionData(for: id) {
+                reviewWarningText(metrics: metrics)
+            }
 
-                Text(format(naclContribution(id: id, grams: grams.wrappedValue), digits: 2) + "g")
+            if let gramsText {
+                amountField(title: "用量", text: gramsText, unit: usageUnit(for: id), metrics: metrics)
+            } else {
+                Text("自动补足")
                     .font(.system(size: 13, weight: .heavy))
                     .foregroundStyle(subInk)
-                    .frame(width: 48, alignment: .trailing)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 10)
+                    .frame(height: metrics.inputFieldHeight)
+                    .background(AppTheme.field)
+                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
+                            .stroke(AppTheme.border, lineWidth: 1.0)
+                            .allowsHitTesting(false)
+                    )
             }
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, metrics.sauceRowVerticalPadding)
     }
 
     private func usageUnit(for id: SauceID) -> String {
@@ -323,7 +408,7 @@ struct ContentView: View {
         id == .soy ? "容量" : "重量"
     }
 
-    private func numberField(title: String, text: Binding<String>, unit: String) -> some View {
+    private func numberField(title: String, text: Binding<String>, unit: String, metrics: MainLayoutMetrics) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
                 .font(.system(size: 12, weight: .bold))
@@ -339,10 +424,14 @@ struct ContentView: View {
                     .foregroundStyle(subInk)
             }
             .padding(.horizontal, 10)
-            .frame(height: 42)
+            .frame(height: metrics.inputFieldHeight)
             .background(field)
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color(red: 0.82, green: 0.74, blue: 0.63), lineWidth: 1.2))
+            .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: AppTheme.Radius.control)
+                    .stroke(Color(red: 0.82, green: 0.74, blue: 0.63), lineWidth: 1.2)
+                    .allowsHitTesting(false)
+            )
         }
     }
 
@@ -350,7 +439,8 @@ struct ContentView: View {
         id: SauceID,
         title: String,
         keyPath: WritableKeyPath<SauceConfig, Double>,
-        unit: String
+        unit: String,
+        metrics: MainLayoutMetrics
     ) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(title)
@@ -367,39 +457,63 @@ struct ContentView: View {
                     .foregroundStyle(subInk)
             }
             .padding(.horizontal, 9)
-            .frame(height: 38)
+            .frame(height: metrics.inputFieldHeight)
             .background(field)
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color(red: 0.82, green: 0.74, blue: 0.63), lineWidth: 1.1))
+            .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: AppTheme.Radius.control)
+                    .stroke(Color(red: 0.82, green: 0.74, blue: 0.63), lineWidth: 1.1)
+                    .allowsHitTesting(false)
+            )
         }
     }
 
-    private func metricCard(title: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
+    private func amountField(title: String, text: Binding<String>, unit: String, metrics: MainLayoutMetrics) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
             Text(title)
-                .font(.system(size: 12, weight: .bold))
+                .font(.system(size: 11, weight: .bold))
                 .foregroundStyle(subInk)
-            Text(value)
-                .font(.system(size: 25, weight: .heavy))
-                .foregroundStyle(ink)
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
+            HStack(spacing: 4) {
+                TextField("", text: text)
+                    .keyboardType(.decimalPad)
+                    .font(.system(size: 16, weight: .heavy))
+                    .foregroundStyle(ink)
+                    .accessibilityLabel(title)
+                Text(unit)
+                    .font(.system(size: 12, weight: .heavy))
+                    .foregroundStyle(subInk)
+            }
+            .padding(.horizontal, 9)
+            .frame(height: metrics.inputFieldHeight)
+            .background(field)
+            .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: AppTheme.Radius.control)
+                    .stroke(AppTheme.border, lineWidth: 1.1)
+                    .allowsHitTesting(false)
+            )
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
-        .background(Color(red: 1.0, green: 0.94, blue: 0.81))
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color(red: 0.88, green: 0.74, blue: 0.52), lineWidth: 1.1))
+        .frame(maxWidth: .infinity)
     }
 
-    private func compactCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+    private func reviewWarningText(metrics: MainLayoutMetrics) -> some View {
+        Text("数值偏高，请复核标签")
+            .font(.system(size: metrics.warningFontSize, weight: .bold))
+            .foregroundStyle(Color(red: 0.62, green: 0.10, blue: 0.08))
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func compactCard<Content: View>(metrics: MainLayoutMetrics, @ViewBuilder content: () -> Content) -> some View {
         content()
-            .padding(10)
+            .padding(metrics.cardPadding)
             .background(card)
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color(red: 0.82, green: 0.74, blue: 0.63), lineWidth: 1.1))
-            .shadow(color: Color.black.opacity(0.06), radius: 10, y: 4)
+            .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.card, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: AppTheme.Radius.card)
+                    .stroke(Color(red: 0.82, green: 0.74, blue: 0.63), lineWidth: 1.1)
+                    .allowsHitTesting(false)
+            )
+            .shadow(color: Color.black.opacity(0.04), radius: metrics.cardShadowRadius, y: metrics.cardShadowY)
     }
 
     private var status: (message: String, warning: Bool) {
@@ -447,8 +561,8 @@ struct ContentView: View {
         SauceCalculator.calculate(
             meatGrams: parse(meatWeightText),
             saltPercent: parse(saltPercentText),
-            sweet: sauceInput(for: .sweet, grams: sweetGrams),
-            bean: sauceInput(for: .bean, grams: beanGrams),
+            sweet: sauceInput(for: .sweet, grams: parseAmount(sweetGramsText)),
+            bean: sauceInput(for: .bean, grams: parseAmount(beanGramsText)),
             soy: sauceInput(for: .soy, grams: 0)
         )
     }
@@ -464,7 +578,6 @@ struct ContentView: View {
             var config = configs[id, default: defaultConfig(for: id)]
             config[keyPath: keyPath] = max(0, newValue)
             configs[id] = config
-            trimManualSliders()
         }
     }
 
@@ -481,41 +594,11 @@ struct ContentView: View {
         return config.sodiumMilligrams > 0 && config.referenceGrams > 0
     }
 
-    private func naclRate(for id: SauceID) -> Double {
+    private func shouldReviewNutritionData(for id: SauceID) -> Bool {
         let config = configs[id, default: defaultConfig(for: id)]
-        return SauceCalculator.naclRate(
+        return SauceCalculator.shouldReviewNutritionData(
             sodiumMilligrams: config.sodiumMilligrams,
             referenceGrams: config.referenceGrams
-        )
-    }
-
-    private func naclContribution(id: SauceID, grams: Double) -> Double {
-        let config = configs[id, default: defaultConfig(for: id)]
-        return SauceCalculator.naclContribution(
-            grams: grams,
-            sodiumMilligrams: config.sodiumMilligrams,
-            referenceGrams: config.referenceGrams
-        )
-    }
-
-    private func sliderMaximum(for id: SauceID) -> Double {
-        let rate = naclRate(for: id)
-        guard targetNaClGrams > 0, rate > 0 else { return 100 }
-        return max(20, targetNaClGrams / rate * 1.25)
-    }
-
-    private func trimManualSliders() {
-        sweetGrams = trimmedManualGrams(sweetGrams, for: .sweet)
-        beanGrams = trimmedManualGrams(beanGrams, for: .bean)
-    }
-
-    private func trimmedManualGrams(_ grams: Double, for id: SauceID) -> Double {
-        let config = configs[id, default: defaultConfig(for: id)]
-        return SauceCalculator.trimmedManualGrams(
-            grams,
-            sodiumMilligrams: config.sodiumMilligrams,
-            referenceGrams: config.referenceGrams,
-            targetNaClGrams: targetNaClGrams
         )
     }
 
@@ -536,7 +619,6 @@ struct ContentView: View {
         configs[.sweet] = saved.sweet
         configs[.bean] = saved.bean
         configs[.soy] = saved.soy
-        trimManualSliders()
     }
 
     private func saveConfigs() {
@@ -635,7 +717,6 @@ struct ContentView: View {
         }
 
         configs[id] = SauceConfig(sodiumMilligrams: sodium, referenceGrams: reference)
-        trimManualSliders()
         ocrConfirmation = nil
         pendingScanSauce = nil
         scanMessage = ("已填入\(id.name)钠配置，点击保存配置后会保存在本机。", false)
@@ -643,6 +724,10 @@ struct ContentView: View {
 
     private func parse(_ text: String) -> Double {
         NumberText.parse(text) ?? 0
+    }
+
+    private func parseAmount(_ text: String) -> Double {
+        max(0, parse(text))
     }
 
     private func format(_ value: Double, digits: Int) -> String {
@@ -656,6 +741,7 @@ struct ContentView: View {
     private func dismissKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
+
 }
 
 private struct OCRSourceDialog: View {
@@ -666,7 +752,7 @@ private struct OCRSourceDialog: View {
     var onCancel: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 14) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("识别钠含量")
@@ -680,10 +766,15 @@ private struct OCRSourceDialog: View {
                 Button(action: onCancel) {
                     Image(systemName: "xmark")
                         .font(.system(size: 13, weight: .heavy))
-                        .foregroundStyle(AppTheme.subInk)
+                        .foregroundStyle(AppTheme.brown)
                         .frame(width: 34, height: 34)
-                        .background(AppTheme.warmHighlight)
-                        .clipShape(Circle())
+                        .background(AppTheme.field)
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
+                                .stroke(AppTheme.border, lineWidth: 1.0)
+                                .allowsHitTesting(false)
+                        )
                 }
                 .accessibilityLabel("取消")
             }
@@ -693,14 +784,15 @@ private struct OCRSourceDialog: View {
             }
             sourceButton(title: "从相册选择", systemImage: "photo.on.rectangle.angled", action: onPhoto)
         }
-        .padding(14)
+        .padding(16)
         .background(AppTheme.card)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.card, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
+            RoundedRectangle(cornerRadius: AppTheme.Radius.card, style: .continuous)
                 .stroke(AppTheme.border, lineWidth: 1.2)
+                .allowsHitTesting(false)
         )
-        .shadow(color: Color.black.opacity(0.18), radius: 18, y: 8)
+        .shadow(color: Color.black.opacity(0.10), radius: 16, y: 6)
     }
 
     private func sourceButton(title: String, systemImage: String, action: @escaping () -> Void) -> some View {
@@ -715,11 +807,16 @@ private struct OCRSourceDialog: View {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 13, weight: .heavy))
             }
-            .foregroundStyle(.white)
+            .foregroundStyle(AppTheme.brown)
             .padding(.horizontal, 13)
             .frame(height: 48)
-            .background(AppTheme.brown)
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .background(AppTheme.field)
+            .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
+                    .stroke(AppTheme.border, lineWidth: 1.1)
+                    .allowsHitTesting(false)
+            )
         }
         .buttonStyle(.plain)
     }
@@ -741,86 +838,118 @@ private struct OCRConfirmationSheet: View {
     @State private var imageViewerVisible = false
 
     var body: some View {
-        NavigationStack {
-            GeometryReader { proxy in
-                let topMaxHeight = min(320, proxy.size.height * 0.40)
+        GeometryReader { proxy in
+            let topMaxHeight = min(320, proxy.size.height * 0.36)
+
+            VStack(alignment: .leading, spacing: 8) {
+                confirmationHeader
+                    .padding(.horizontal, 16)
+                    .padding(.top, 12)
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            sectionTitle("选择识别结果")
+                            ForEach(Array(candidates.enumerated()), id: \.element.id) { index, candidate in
+                                candidateButton(index: index, candidate: candidate)
+                            }
+                        }
+
+                        VStack(alignment: .leading, spacing: 8) {
+                            sectionTitle("确认后填入\(sauceName)")
+                            HStack(spacing: 8) {
+                                editableField(title: "Na", text: $sodiumText, unit: "mg")
+                                Text("/")
+                                    .font(.system(size: 20, weight: .heavy))
+                                    .foregroundStyle(AppTheme.subInk)
+                                    .padding(.top, 18)
+                                editableField(title: referenceTitle, text: $referenceText, unit: referenceUnit)
+                            }
+                            if shouldReviewNutritionData {
+                                Text("数值偏高，请复核标签")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundStyle(Color(red: 0.62, green: 0.10, blue: 0.08))
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 2)
+                }
+                .frame(maxHeight: topMaxHeight)
 
                 VStack(alignment: .leading, spacing: 6) {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 10) {
-                            VStack(alignment: .leading, spacing: 8) {
-                                sectionTitle("选择识别结果")
-                                ForEach(Array(candidates.enumerated()), id: \.element.id) { index, candidate in
-                                    candidateButton(index: index, candidate: candidate)
-                                }
-                            }
-
-                            VStack(alignment: .leading, spacing: 8) {
-                                sectionTitle("确认后填入\(sauceName)")
-                                HStack(spacing: 8) {
-                                    editableField(title: "Na", text: $sodiumText, unit: "mg")
-                                    Text("/")
-                                        .font(.system(size: 20, weight: .heavy))
-                                        .foregroundStyle(AppTheme.subInk)
-                                        .padding(.top, 18)
-                                    editableField(title: referenceTitle, text: $referenceText, unit: referenceUnit)
-                                }
-                            }
+                    sectionTitle("原图")
+                    Button {
+                        imageViewerVisible = true
+                    } label: {
+                        GeometryReader { imageProxy in
+                            Image(uiImage: originalImage)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: imageProxy.size.width, height: imageProxy.size.height)
+                                .clipped()
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.top, 12)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(AppTheme.field)
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
+                                .stroke(accentColor.opacity(0.75), lineWidth: 1.3)
+                                .allowsHitTesting(false)
+                        )
                     }
-                    .frame(maxHeight: topMaxHeight)
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        sectionTitle("原图")
-                        Button {
-                            imageViewerVisible = true
-                        } label: {
-                            GeometryReader { imageProxy in
-                                Image(uiImage: originalImage)
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(width: imageProxy.size.width, height: imageProxy.size.height)
-                                    .clipped()
-                            }
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .background(AppTheme.field)
-                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                    .stroke(accentColor.opacity(0.75), lineWidth: 1.3)
-                            )
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("查看原图大图")
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 14)
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("查看原图大图")
                 }
-                .background(AppTheme.bg)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 14)
             }
-            .navigationTitle("确认钠含量")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("取消", action: onCancel)
-                        .foregroundStyle(AppTheme.brown)
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("填入", action: onConfirm)
-                        .fontWeight(.bold)
-                        .foregroundStyle(canConfirm ? accentColor : AppTheme.subInk.opacity(0.55))
-                        .disabled(!canConfirm)
-                }
-            }
-            .toolbarBackground(AppTheme.card, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
+            .background(AppTheme.bg.ignoresSafeArea())
         }
         .fullScreenCover(isPresented: $imageViewerVisible) {
             OriginalImageViewer(image: originalImage)
         }
+    }
+
+    private var confirmationHeader: some View {
+        HStack(spacing: 10) {
+            Button("取消", action: onCancel)
+                .font(.system(size: 15, weight: .heavy))
+                .foregroundStyle(AppTheme.brown)
+                .padding(.horizontal, 14)
+                .frame(height: 38)
+                .background(AppTheme.field)
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
+                        .stroke(AppTheme.border, lineWidth: 1.1)
+                        .allowsHitTesting(false)
+                )
+
+            Spacer()
+
+            Button("填入", action: onConfirm)
+                .font(.system(size: 15, weight: .heavy))
+                .foregroundStyle(canConfirm ? AppTheme.field : AppTheme.subInk.opacity(0.55))
+                .padding(.horizontal, 16)
+                .frame(height: 38)
+                .background(canConfirm ? accentColor : AppTheme.field.opacity(0.78))
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
+                        .stroke(canConfirm ? accentColor : AppTheme.border, lineWidth: 1.1)
+                        .allowsHitTesting(false)
+                )
+                .disabled(!canConfirm)
+        }
+        .overlay {
+            Text("确认钠含量")
+                .font(.system(size: 18, weight: .heavy))
+                .foregroundStyle(AppTheme.ink)
+                .allowsHitTesting(false)
+        }
+        .accessibilityElement(children: .contain)
     }
 
     private func sectionTitle(_ title: String) -> some View {
@@ -856,10 +985,11 @@ private struct OCRConfirmationSheet: View {
             .foregroundStyle(AppTheme.ink)
             .padding(10)
             .background(selectedIndex == index ? accentColor.opacity(0.14) : AppTheme.card)
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
                     .stroke(selectedIndex == index ? accentColor : AppTheme.border, lineWidth: 1.1)
+                    .allowsHitTesting(false)
             )
         }
         .buttonStyle(.plain)
@@ -867,6 +997,17 @@ private struct OCRConfirmationSheet: View {
 
     private var canConfirm: Bool {
         parsedPositiveDouble(sodiumText) != nil && parsedPositiveDouble(referenceText) != nil
+    }
+
+    private var shouldReviewNutritionData: Bool {
+        guard let sodium = NumberText.parse(sodiumText),
+              let reference = NumberText.parse(referenceText) else {
+            return false
+        }
+        return SauceCalculator.shouldReviewNutritionData(
+            sodiumMilligrams: sodium,
+            referenceGrams: reference
+        )
     }
 
     private var referenceTitle: String {
@@ -900,6 +1041,7 @@ private struct OCRConfirmationSheet: View {
                     .keyboardType(.decimalPad)
                     .font(.system(size: 18, weight: .heavy))
                     .foregroundStyle(AppTheme.ink)
+                    .accessibilityLabel(title)
                 Text(unit)
                     .font(.system(size: 13, weight: .bold))
                     .foregroundStyle(AppTheme.subInk)
@@ -907,13 +1049,15 @@ private struct OCRConfirmationSheet: View {
             .padding(.horizontal, 10)
             .frame(height: 44)
             .background(AppTheme.field)
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
                     .stroke(accentColor.opacity(0.55), lineWidth: 1.1)
+                    .allowsHitTesting(false)
             )
         }
     }
+
 }
 
 private struct OriginalImageViewer: View {

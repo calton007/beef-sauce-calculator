@@ -11,3 +11,47 @@ build/
 *.xcodeproj/project.xcworkspace/
 BeefSauceCalculator/Assets.xcassets/AppIcon.appiconset/AppIcon-source-*.png
 BeefSauceCalculator/Assets.xcassets/AppIcon.appiconset/SiameseChef-transparent.png
+
+# Archives / export
+*.ipa
+*.xcarchive
+*.dSYM
+*.dSYM.zip
+
+# Signing / provisioning
+*.mobileprovision
+*.provisionprofile
+*.p12
+*.cer
+*.pem
+*.key
+
+# Environment
+.env
+.env.*
+
+# iOS / Xcode
+*.xccheckout
+*.moved-aside
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Project specific additions
+*.xcodeproj/xcshareddata/
+*.xcworkspace/xcshareddata/
+
+# Build / typecheck caches
+DerivedDataNoIcon/
+TypecheckModuleCache/
+
+# Xcode workspace/user data
+
+# Local guidance / agent notes
+AGENTS.md
+
+# Local git hooks
+.githooks/

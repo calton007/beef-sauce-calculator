@@ -18,6 +18,18 @@ final class SauceCalculatorTests: XCTestCase {
         )
     }
 
+    func testNutritionDataReviewWarningUsesWideThresholds() {
+        XCTAssertTrue(
+            SauceCalculator.shouldReviewNutritionData(sodiumMilligrams: 5000.1, referenceGrams: 15)
+        )
+        XCTAssertTrue(
+            SauceCalculator.shouldReviewNutritionData(sodiumMilligrams: 900, referenceGrams: 100.1)
+        )
+        XCTAssertFalse(
+            SauceCalculator.shouldReviewNutritionData(sodiumMilligrams: 5000, referenceGrams: 100)
+        )
+    }
+
     func testSoyAutomaticallyFillsRemainingNaCl() {
         let result = SauceCalculator.calculate(
             meatGrams: 1000,
@@ -53,29 +65,6 @@ final class SauceCalculatorTests: XCTestCase {
         )
         XCTAssertEqual(
             SauceCalculator.naclContribution(grams: 50, sodiumMilligrams: 750, referenceGrams: 0),
-            0,
-            accuracy: 0.0001
-        )
-    }
-
-    func testInvalidManualSauceTrimsToZero() {
-        XCTAssertEqual(
-            SauceCalculator.trimmedManualGrams(
-                50,
-                sodiumMilligrams: 0,
-                referenceGrams: 15,
-                targetNaClGrams: 40
-            ),
-            0,
-            accuracy: 0.0001
-        )
-        XCTAssertEqual(
-            SauceCalculator.trimmedManualGrams(
-                50,
-                sodiumMilligrams: 750,
-                referenceGrams: 0,
-                targetNaClGrams: 40
-            ),
             0,
             accuracy: 0.0001
         )
